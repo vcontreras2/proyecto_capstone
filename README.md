@@ -78,9 +78,15 @@ Minimiza el **costo esperado**, ponderando cada nodo por su probabilidad `π_n`:
 | `resolver(PL=2, contra_pedido=False, tiempo_max=300, verbose=False, **override)` | Construye y resuelve el modelo y devuelve un `dict` con el estado, el costo, su desglose, DataFrames (`nodos`, `productos`, `vinos`) y los productos postergables elegidos. `override` permite cambiar parámetros, p. ej. `Cb_bl=1000`. |
 | `resumen(res)` | Imprime la política, el estado, el costo esperado y su desglose. |
 | `comparar_politicas(PLs=(0,2,3,4,5))` | Resuelve todas las políticas y devuelve una tabla comparativa. |
+| `sensibilidad(parametro, valores, PLs)` | Resuelve cada política para varios valores de un parámetro (por defecto `T_prod`). |
+| `graficar_demanda()` | Demanda por nodo, apilada por producto. |
 | `graficar_arbol(res)` | Dibuja el árbol de escenarios, coloreado según el % de horas de línea usadas. |
 | `graficar_decisiones(res)` | Muestra producción, inventario, atrasos y horas por nodo (4 gráficos). |
-| `graficar_comparacion(tabla)` | Barras apiladas del costo por política. |
+| `graficar_comparacion(tabla)` | Desglose del costo por política y costo total en escala logarítmica. |
+| `graficar_sensibilidad(sens, base)` | Costo de cada política según el parámetro variado. |
+| `tabla_plan_inicial(res)`, `tabla_comparacion(tabla)`, `tabla_parametros(params)` | Tablas con formato listas para presentar. |
+
+Todos los gráficos usan el mismo estilo (`aplicar_estilo()`), una paleta apta para daltonismo y números en formato chileno (1.234.567,8). Para exportar una figura en alta resolución: `fig = modelo.graficar_arbol(res); fig.savefig("arbol.png")`.
 
 ---
 
