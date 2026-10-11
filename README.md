@@ -85,6 +85,11 @@ Minimiza el **costo esperado**, ponderando cada nodo por su probabilidad `π_n`:
 | `graficar_comparacion(tabla)` | Desglose del costo por política y costo total en escala logarítmica. |
 | `graficar_sensibilidad(sens, base)` | Costo de cada política según el parámetro variado. |
 | `tabla_plan_inicial(res)`, `tabla_comparacion(tabla)`, `tabla_parametros(params)` | Tablas con formato listas para presentar. |
+| `tabla_costos(tabla)`, `graficar_costos_detalle(tabla)` | Los 6 términos de la función objetivo por política: 3 tipos de set-up, inventario sin etiqueta, inventario terminado y atrasos. |
+| `tabla_kpis(tabla)`, `graficar_kpis(tabla)` | KPIs operativos por política: nivel de servicio, utilización, set-ups e inventario promedio. |
+| `sensibilidad(..., detalle=True)`, `graficar_sensibilidad_kpis(det)` | Costos y KPIs para cada nivel del parámetro y cada política. |
+
+`resolver()` devuelve además `res["costo_detalle"]` (los 6 costos) y `res["kpis"]`. Los KPIs son valores esperados, ponderados por la probabilidad de cada nodo.
 
 Todos los gráficos usan el mismo estilo (`aplicar_estilo()`), una paleta apta para daltonismo y números en formato chileno (1.234.567,8). Para exportar una figura en alta resolución: `fig = modelo.graficar_arbol(res); fig.savefig("arbol.png")`.
 

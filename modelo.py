@@ -106,7 +106,9 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
         h = (sum(P["Tw_bl"] * val(wbl[i, j, n]) + P["Tz_bl"] * val(zbl[i, j, n])
                  + P["Tw_l"] * val(wl[i, j, n]) + P["Tz_l"] * val(zl[i, j, n]) for i, j in IJ)
              + sum(P["Tw_b"] * val(wb[i, n]) + P["Tz_b"] * val(zb[i, n]) for i in I))
-        filas.append(dict(nodo=n, padre=padre[n], prob=pi[n], horas=h,
+        hs = (sum(P["Tz_bl"] * val(zbl[i, j, n]) + P["Tz_l"] * val(zl[i, j, n]) for i, j in IJ)
+              + sum(P["Tz_b"] * val(zb[i, n]) for i in I))
+        filas.append(dict(nodo=n, padre=padre[n], prob=pi[n], horas=h, horas_setup=hs,
                           estanques=sum(val(y[i, n]) for i in I)))
     nodos = pd.DataFrame(filas).set_index("nodo")
 
@@ -130,7 +132,20 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
         + sum(pi[n] * P["Cs_bl"] * val(sbl[i, j, n]) for n in N for i, j in IJ),
         atrasos=sum(pi[n] * P["Cb_bl"] * val(bbl[i, j, n]) for n in N for i, j in IJ))
 
-    return dict(status=status, obj=pulp.value(m.objective), costo=costo, PL=PL, contra_pedido=contra_pedido,
+    # los 6 terminos de la funcion objetivo, por separado (valor esperado)
+    E = lambda f: sum(pi[n] * f(n) for n in N)
+    costo_detalle = {
+        "Set-up embotellado sin etiqueta": E(lambda n: sum(P["Cz_b"] * val(zb[i, n]) for i in I)),
+        "Set-up embotellado + etiquetado": E(lambda n: sum(P["Cz_bl"] * val(zbl[i, j, n]) for i, j in IJ)),
+        "Set-up etiquetado posterior": E(lambda n: sum(P["Cz_l"] * val(zl[i, j, n]) for i, j in IJ)),
+        "Inventario sin etiqueta": E(lambda n: sum(P["Cs_b"] * val(sb[i, n]) for i in I)),
+        "Inventario terminado": E(lambda n: sum(P["Cs_bl"] * val(sbl[i, j, n]) for i, j in IJ)),
+        "Atrasos": E(lambda n: sum(P["Cb_bl"] * val(bbl[i, j, n]) for i, j in IJ)),
+    }
+    kpi = _calcular_kpis(nodos, productos, vinos, P)
+
+    return dict(status=status, obj=pulp.value(m.objective), costo=costo, costo_detalle=costo_detalle, kpis=kpi,
+                PL=PL, contra_pedido=contra_pedido,
                 nodos=nodos, productos=productos, vinos=vinos,
                 postergables=[ij for ij in IJ if val(zpos[ij]) > 0.5],
                 padre=padre, hijos=hijos, L=L, IJ=IJ, params=P, modelo=m)
@@ -143,31 +158,75 @@ def resumen(res):
     print(f"Política: {nom}  |  estado: {res['status']}  |  costo esperado: ${_num(res['obj'])}")
     print(f"  Set-ups ${_num(c['setups'])}  |  Inventario ${_num(c['inventario'])}  |  Atrasos ${_num(c['atrasos'])}")
     print(f"  Productos postergables elegidos: {post}")
+    k = res["kpis"]
+    print(f"  Nivel de servicio {_pct(k['Nivel de servicio'], 1)}  |  Utilización media {_pct(k['Utilización media'])}"
+          f"  |  Set-ups esperados {_num(k['Set-ups (total)'], 1)}"
+          f"  |  Inventario promedio {_num(k['Inventario promedio (total)'])} botellas")
 
 
 def comparar_politicas(PLs=(0, 2, 3, 4, 5), **kw):
     """Resuelve a stock, hibridas y contra pedido y devuelve tabla comparativa."""
     filas = []
-    for PL in PLs:
-        r = resolver(PL=PL, **kw)
-        filas.append(dict(politica=_nombre_politica(PL), estado=r["status"], costo=r["obj"],
-                          **r["costo"], postergables=r["postergables"]))
-    r = resolver(contra_pedido=True, **kw)
-    filas.append(dict(politica="Contra pedido", estado=r["status"], costo=r["obj"], **r["costo"], postergables=[]))
+    corridas = [(_nombre_politica(PL), dict(PL=PL)) for PL in PLs] + [("Contra pedido", dict(contra_pedido=True))]
+    for nombre, args in corridas:
+        r = resolver(**args, **kw)
+        filas.append(dict(politica=nombre, estado=r["status"], costo=r["obj"], **r["costo"],
+                          postergables=r["postergables"], **r["costo_detalle"], **r["kpis"]))
     return pd.DataFrame(filas).set_index("politica")
+
+
+COMPONENTES_COSTO = ["Set-up embotellado sin etiqueta", "Set-up embotellado + etiquetado",
+                     "Set-up etiquetado posterior", "Inventario sin etiqueta", "Inventario terminado", "Atrasos"]
+
+
+def _calcular_kpis(nodos, productos, vinos, P):
+    """KPIs operativos esperados (ponderados por la probabilidad de cada nodo).
+    Como las probabilidades de cada periodo suman 1, sum(pi * x) / n_periodos es el promedio por periodo."""
+    pi = nodos["prob"]
+    n_per = pi.sum()                                   # = numero de periodos
+    pr = productos.assign(pi=productos["nodo"].map(pi))
+    vi = vinos.assign(pi=vinos["nodo"].map(pi))
+    demanda = (pr["pi"] * pr["demanda"]).sum()
+    # demanda del nodo que no se entrega a tiempo (lo atrasado al final del nodo, acotado por la demanda del nodo)
+    no_atendida = (pr["pi"] * pr[["demanda", "atraso"]].min(axis=1)).sum()
+    atraso_nodo = pr.groupby("nodo")["atraso"].sum()
+    inv_b = (vi["pi"] * vi["inv_sin_etiq"]).sum() / n_per
+    inv_bl = (pr["pi"] * pr["inv_terminado"]).sum() / n_per
+    uso = nodos["horas"] / P["T_prod"]
+    return {
+        "Nivel de servicio": 1 - no_atendida / demanda,
+        "Periodos sin atrasos": (pi * (atraso_nodo < 0.5)).sum() / n_per,
+        "Atraso promedio (botellas)": (pr["pi"] * pr["atraso"]).sum() / n_per,
+        "Utilización media": (pi * uso).sum() / n_per,
+        "Utilización máxima": uso.max(),
+        "Horas en set-up": (pi * nodos["horas_setup"]).sum() / max((pi * nodos["horas"]).sum(), 1e-9),
+        "Set-ups embotellado sin etiqueta": (vi["pi"] * vi["setup_b"]).sum(),
+        "Set-ups embotellado + etiquetado": (pr["pi"] * pr["setup_bl"]).sum(),
+        "Set-ups etiquetado posterior": (pr["pi"] * pr["setup_l"]).sum(),
+        "Set-ups (total)": (vi["pi"] * vi["setup_b"]).sum() + (pr["pi"] * (pr["setup_bl"] + pr["setup_l"])).sum(),
+        "Inventario promedio sin etiqueta": inv_b,
+        "Inventario promedio terminado": inv_bl,
+        "Inventario promedio (total)": inv_b + inv_bl,
+        "Cobertura (periodos de demanda)": (inv_b + inv_bl) / (demanda / n_per),
+    }
 
 
 # ---------------------------------------------------------------------------
 # Sensibilidad
 # ---------------------------------------------------------------------------
-def sensibilidad(parametro="T_prod", valores=(21, 42, 63, 84), PLs=(0, 2, 3, 4, 5), **kw):
+def sensibilidad(parametro="T_prod", valores=(21, 42, 63, 84), PLs=(0, 2, 3, 4, 5), detalle=False, **kw):
     """Costo esperado de cada politica al variar un parametro de la Tabla 2.
     Por defecto: niveles de capacidad de la linea del Anexo A (sec. 6, "Niveles de referencia").
-    Devuelve un DataFrame (filas = valor del parametro, columnas = politica)."""
-    filas = {}
+    Devuelve un DataFrame (filas = valor del parametro, columnas = politica) con el costo esperado.
+    Con detalle=True devuelve una fila por (valor, politica) con costos, componentes y KPIs."""
+    filas = []
     for v in valores:
-        filas[v] = {_nombre_politica(PL): resolver(PL=PL, **{parametro: v}, **kw)["obj"] for PL in PLs}
-    return pd.DataFrame(filas).T.rename_axis(parametro)
+        for PL in PLs:
+            r = resolver(PL=PL, **{parametro: v}, **kw)
+            filas.append({parametro: v, "politica": _nombre_politica(PL), "estado": r["status"], "costo": r["obj"],
+                          **r["costo_detalle"], **r["kpis"]})
+    det = pd.DataFrame(filas).set_index([parametro, "politica"])
+    return det if detalle else det["costo"].unstack("politica")[[_nombre_politica(PL) for PL in PLs]]
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +274,22 @@ aplicar_estilo()
 
 def _num(x, dec=0):
     """Formato chileno: 1.234.567,8"""
+    if round(x, dec) == 0:
+        x = 0.0
     return f"{x:,.{dec}f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def _pct(x, dec=0):
+    return _num(100 * x, dec) + " %"
+
+
+def _corto(v):
+    """Montos compactos para rotulos: 1,9 MM / 13,1 mil / 500"""
+    if abs(v) >= 1e6:
+        return f"{_num(v / 1e6, 1 if abs(v) < 1e8 else 0)} MM"
+    if abs(v) >= 1e3:
+        return f"{_num(v / 1e3, 1 if abs(v) < 1e5 else 0)} mil"
+    return _num(v)
 
 
 def _eje_miles(ax, eje="y"):
@@ -539,4 +613,173 @@ def graficar_sensibilidad(tabla, base=None):
     fig.suptitle(titulo, x=0.01, ha="left",
                  fontsize=14, fontweight="bold")
     plt.tight_layout(rect=(0, 0, 1, 0.92))
+    return fig
+
+
+# ---------------------------------------------------------------------------
+# Desglose de costos y KPIs operativos
+# ---------------------------------------------------------------------------
+GRUPOS_KPI = {
+    "Servicio": ["Nivel de servicio", "Periodos sin atrasos", "Atraso promedio (botellas)"],
+    "Utilización de la línea": ["Utilización media", "Utilización máxima", "Horas en set-up"],
+    "Set-ups esperados": ["Set-ups embotellado sin etiqueta", "Set-ups embotellado + etiquetado",
+                          "Set-ups etiquetado posterior", "Set-ups (total)"],
+    "Inventario promedio por periodo (botellas)": ["Inventario promedio sin etiqueta", "Inventario promedio terminado",
+                                                   "Inventario promedio (total)", "Cobertura (periodos de demanda)"],
+}
+_FMT_KPI = {**{k: _pct for k in ["Nivel de servicio", "Periodos sin atrasos", "Utilización media",
+                                 "Utilización máxima", "Horas en set-up"]},
+            **{k: (lambda v: _num(v, 1)) for k in GRUPOS_KPI["Set-ups esperados"]},
+            "Cobertura (periodos de demanda)": lambda v: _num(v, 2)}
+_DESTACADO = "font-weight: bold; background-color: #e6f0fb"
+
+
+def tabla_costos(tabla):
+    """Los 6 terminos de la funcion objetivo por politica (valor esperado, $). Filas = componentes."""
+    df = tabla[COMPONENTES_COSTO].T
+    df.loc["Costo total"] = tabla["costo"]
+    df.columns.name = None
+    mejor = tabla["costo"].idxmin()
+    return (df.rename_axis("Componente ($)").style
+            .format(_num)
+            .apply(lambda c: [_DESTACADO if c.name == mejor else ""] * len(c))
+            .apply(lambda f: ["border-top: 2px solid #52514e; font-weight: bold" if f.name == "Costo total" else ""]
+                   * len(f), axis=1))
+
+
+def tabla_kpis(tabla):
+    """KPIs operativos por politica, agrupados por tema. Filas = KPI, columnas = politica."""
+    filas = [(g, k) for g, ks in GRUPOS_KPI.items() for k in ks]
+    df = pd.DataFrame({p: [tabla.loc[p, k] for _, k in filas] for p in tabla.index},
+                      index=pd.MultiIndex.from_tuples(filas, names=["", "KPI"]))
+    texto = df.copy().astype(object)
+    for g, k in filas:
+        texto.loc[(g, k)] = [_FMT_KPI.get(k, _num)(v) for v in df.loc[(g, k)]]
+    mejor = tabla["costo"].idxmin()
+    return texto.style.apply(lambda c: [_DESTACADO if c.name == mejor else ""] * len(c))
+
+
+def _barras_politicas(a, serie, fmt, omitidas=()):
+    """Barras de una sola serie por politica, con rotulo del valor."""
+    colores = ["#b5b4ae" if p in omitidas else PALETA[0] for p in serie.index]
+    a.bar(range(len(serie)), serie.values, width=0.6, color=colores)
+    for k, v in enumerate(serie.values):
+        a.annotate(fmt(v), (k, v), ha="center", va="bottom", fontsize=8.5, xytext=(0, 2), textcoords="offset points")
+    a.set_xticks(range(len(serie)), serie.index, rotation=25, ha="right")
+    a.grid(axis="x", visible=False)
+    a.margins(y=0.18)
+
+
+def graficar_costos_detalle(tabla):
+    """Un panel por cada termino de la funcion objetivo (escala propia en cada uno)."""
+    fig, ax = plt.subplots(2, 3, figsize=(15, 8.5), sharex=True)
+    for a, comp in zip(ax.flat, COMPONENTES_COSTO):
+        _barras_politicas(a, tabla[comp], lambda v: "$" + _corto(v), omitidas=["Contra pedido"])
+        a.set_title(comp, fontsize=11)
+        a.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: _corto(v)))
+    for a in ax[0]:
+        a.tick_params(labelbottom=False)
+    fig.suptitle("Costo esperado por componente de la función objetivo ($)", x=0.01, ha="left",
+                 fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    return fig
+
+
+def _pct_eje(a):
+    a.set_ylim(0, 112)
+    a.set_yticks(range(0, 101, 20))
+    a.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
+
+
+def _apiladas_politicas(a, tabla, series, fmt):
+    pols = list(tabla.index)
+    x = range(len(pols))
+    abajo = pd.Series(0.0, index=pols)
+    for nombre, (col, c) in series.items():
+        a.bar(x, tabla[col], bottom=abajo, width=0.6, color=c, label=nombre, edgecolor=SUPERFICIE, linewidth=1)
+        abajo += tabla[col]
+    for k, v in enumerate(abajo):
+        a.annotate(fmt(v), (k, v), ha="center", va="bottom", fontsize=8.5, xytext=(0, 2), textcoords="offset points")
+    a.set_xticks(list(x), pols, rotation=25, ha="right")
+    a.grid(axis="x", visible=False)
+
+
+def graficar_kpis(tabla):
+    """KPIs operativos por politica: servicio, utilizacion, set-ups e inventario promedio."""
+    fig, ax = plt.subplots(2, 2, figsize=(15, 9.5))
+    pols = list(tabla.index)
+    x = range(len(pols))
+
+    a = ax[0, 0]
+    _barras_politicas(a, tabla["Nivel de servicio"] * 100, lambda v: _num(v, 1) + " %", omitidas=["Contra pedido"])
+    _pct_eje(a)
+    a.set_title("Nivel de servicio (demanda entregada a tiempo)")
+
+    a = ax[0, 1]
+    w = 0.38
+    a.bar([k - w / 2 for k in x], tabla["Utilización media"] * 100, width=w, color=PALETA[0], label="Media",
+          edgecolor=SUPERFICIE, linewidth=1)
+    a.bar([k + w / 2 for k in x], tabla["Utilización máxima"] * 100, width=w, color=PALETA[1],
+          label="Máxima (nodo más cargado)", edgecolor=SUPERFICIE, linewidth=1)
+    _pct_eje(a)
+    a.set_xticks(list(x), pols, rotation=25, ha="right")
+    a.grid(axis="x", visible=False)
+    a.legend(loc="upper left", ncol=2)
+    a.set_title("Utilización de la línea (% de las horas disponibles)")
+
+    a = ax[1, 0]
+    _apiladas_politicas(a, tabla, {
+        "Embotellado + etiquetado": ("Set-ups embotellado + etiquetado", COLOR["etiquetada"]),
+        "Embotellado sin etiqueta": ("Set-ups embotellado sin etiqueta", COLOR["sin_etiqueta"]),
+        "Etiquetado posterior": ("Set-ups etiquetado posterior", COLOR["etiquetado_posterior"])},
+        lambda v: _num(v, 1))
+    a.margins(y=0.25)
+    a.legend(loc="upper left", ncol=3)
+    a.set_title("Número esperado de set-ups en el horizonte")
+
+    a = ax[1, 1]
+    _apiladas_politicas(a, tabla, {
+        "Producto terminado": ("Inventario promedio terminado", COLOR["etiquetada"]),
+        "Sin etiqueta": ("Inventario promedio sin etiqueta", COLOR["sin_etiqueta"])}, _num)
+    _eje_miles(a)
+    a.set_ylim(0, tabla["Inventario promedio (total)"].max() * 1.15)
+    a.legend(loc="upper right")
+    a.set_title("Inventario promedio por periodo (botellas)")
+
+    fig.suptitle("KPIs operativos por política (valores esperados)", x=0.01, ha="left", fontsize=14,
+                 fontweight="bold")
+    plt.tight_layout()
+    return fig
+
+
+def graficar_sensibilidad_kpis(det, base=None):
+    """Nivel de servicio, inventario promedio y utilizacion media por nivel del parametro y politica."""
+    import numpy as np
+    param = det.index.names[0]
+    niveles = list(det.index.get_level_values(0).unique())
+    pols = list(det.index.get_level_values(1).unique())
+    x = np.arange(len(niveles))
+    w = 0.8 / len(pols)
+    paneles = [("Nivel de servicio", "Nivel de servicio", True),
+               ("Inventario promedio (total)", "Inventario promedio por periodo (botellas)", False),
+               ("Utilización media", "Utilización media de la línea", True)]
+    fig, ax = plt.subplots(1, 3, figsize=(16, 5.2))
+    for a, (col, titulo, es_pct) in zip(ax, paneles):
+        tab = det[col].unstack("politica")[pols] * (100 if es_pct else 1)
+        for k, p in enumerate(pols):
+            a.bar(x + (k - (len(pols) - 1) / 2) * w, tab.loc[niveles, p], width=w, color=PALETA[k], label=p,
+                  edgecolor=SUPERFICIE, linewidth=1)
+        a.set_xticks(x, [f"{_num(v)} h" + ("\n(caso base)" if v == base else "") for v in niveles])
+        a.grid(axis="x", visible=False)
+        a.set_xlabel(DESCRIPCION_PARAMS.get(param, param))
+        if es_pct:
+            _pct_eje(a)
+        else:
+            _eje_miles(a)
+        a.set_title(titulo, fontsize=11)
+    h, l = ax[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="upper left", bbox_to_anchor=(0.01, 0.95), ncol=len(pols))
+    fig.suptitle("KPIs operativos según la capacidad de la línea" if param == "T_prod" else f"KPIs según {param}",
+                 x=0.01, ha="left", fontsize=14, fontweight="bold")
+    plt.tight_layout(rect=(0, 0, 1, 0.9))
     return fig
