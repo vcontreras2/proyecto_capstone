@@ -89,7 +89,13 @@ Minimiza el **costo esperado**, ponderando cada nodo por su probabilidad `π_n`:
 | `tabla_kpis(tabla)`, `graficar_kpis(tabla)` | KPIs operativos por política: nivel de servicio, utilización, set-ups e inventario promedio. |
 | `sensibilidad(..., detalle=True)`, `graficar_sensibilidad_kpis(det)` | Costos y KPIs para cada nivel del parámetro y cada política. |
 
-`resolver()` devuelve además `res["costo_detalle"]` (los 6 costos) y `res["kpis"]`. Los KPIs son valores esperados, ponderados por la probabilidad de cada nodo.
+| `graficar_politicas(tabla)` | Costo esperado de contra pedido, a stock e híbrida (escala log). |
+| `graficar_base_vs_alternativa(tabla)`, `tabla_base_vs_alternativa(tabla)` | KPIs y costos del caso base (a stock) vs. la híbrida PL=5. |
+| `graficar_puente_costos(tabla)` | Gráfico de cascada: de dónde viene el ahorro, componente por componente. |
+| `graficar_inventario_nodos(res_base, res_alt)` | Inventario al cierre de cada nodo en ambas políticas. |
+| `tabla_tiempos(tabla)`, `info_equipo()` | Tamaño del modelo, tiempos de resolución y datos del equipo. |
+
+`resolver()` devuelve además `res["costo_detalle"]` (los 6 costos), `res["kpis"]` y `res["tamano"]` (variables, restricciones y tiempos). Los KPIs son valores esperados, ponderados por la probabilidad de cada nodo.
 
 Todos los gráficos usan el mismo estilo (`aplicar_estilo()`), una paleta apta para daltonismo y números en formato chileno (1.234.567,8). Para exportar una figura en alta resolución: `fig = modelo.graficar_arbol(res); fig.savefig("arbol.png")`.
 
@@ -99,7 +105,7 @@ Todos los gráficos usan el mismo estilo (`aplicar_estilo()`), una paleta apta p
 
 ### Requisitos
 
-- Python 3.9 o superior (probado con 3.13)
+- Python 3.11 o superior (probado con 3.13.3; pandas 3 y numpy 2.5 no funcionan con versiones anteriores)
 
 ### 1. Crear un entorno virtual (opcional, pero recomendado)
 
@@ -114,10 +120,20 @@ source .venv/bin/activate
 ### 2. Instalar dependencias
 
 ```bash
-pip install pulp highspy pandas matplotlib networkx jupyter
+pip install -r requirements.txt
 ```
 
-> `highspy` instala el solver HiGHS que usa PuLP (`pulp.HiGHS`).
+[requirements.txt](requirements.txt) fija las versiones con las que se probó el proyecto:
+
+| Paquete | Versión | Para qué |
+|---|---|---|
+| `pulp` | 3.3.0 | Modelado del MILP |
+| `highspy` | 1.15.1 | Solver HiGHS (lo usa PuLP con `pulp.HiGHS`) |
+| `pandas` | 3.0.5 | Tablas de resultados |
+| `numpy` | 2.5.2 | Cálculo numérico |
+| `matplotlib` | 3.11.2 | Gráficos |
+| `networkx` | 3.7 | Árbol de escenarios |
+| `jupyter` | 1.1.1 | Notebook de visualización |
 
 ### 3. Ejecutar
 

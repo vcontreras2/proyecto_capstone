@@ -8,6 +8,8 @@ Uso rapido:
     modelo.graficar_arbol(res); modelo.graficar_decisiones(res)
     tabla = modelo.comparar_politicas(); modelo.graficar_comparacion(tabla)
 """
+import time
+
 import pulp
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,6 +39,7 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
     a = {**padre, raiz: AUX}
     Tplus = [AUX] + N
 
+    t0 = time.perf_counter()
     m = pulp.LpProblem("postergacion", pulp.LpMinimize)
     def V(nombre, idx, low=None, up=None, cat="Continuous"):
         return {k: pulp.LpVariable(f"{nombre}_" + "_".join(map(str, k if isinstance(k, tuple) else (k,))),
@@ -96,8 +99,15 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
               + pulp.lpSum(P["Tw_b"] * wb[i, n] + P["Tz_b"] * zb[i, n] for i in I)) <= P["T_prod"], f"R7_{n}"
     m += pulp.lpSum(zpos.values()) <= PL, "R12"
 
+    t1 = time.perf_counter()
     m.solve(pulp.HiGHS(msg=verbose, timeLimit=tiempo_max))
+    t2 = time.perf_counter()
     status = pulp.LpStatus[m.status]
+    variables = m.variables()
+    tamano = {"Variables": len(variables),
+              "Variables enteras/binarias": sum(v.cat == pulp.LpInteger for v in variables),
+              "Restricciones": len(m.constraints),
+              "Tiempo construcción (s)": t1 - t0, "Tiempo resolución (s)": t2 - t1}
 
     # --- Resultados en DataFrames ---
     val = lambda v: (v.value() or 0.0)
@@ -145,7 +155,7 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
     kpi = _calcular_kpis(nodos, productos, vinos, P)
 
     return dict(status=status, obj=pulp.value(m.objective), costo=costo, costo_detalle=costo_detalle, kpis=kpi,
-                PL=PL, contra_pedido=contra_pedido,
+                tamano=tamano, PL=PL, contra_pedido=contra_pedido,
                 nodos=nodos, productos=productos, vinos=vinos,
                 postergables=[ij for ij in IJ if val(zpos[ij]) > 0.5],
                 padre=padre, hijos=hijos, L=L, IJ=IJ, params=P, modelo=m)
@@ -171,7 +181,7 @@ def comparar_politicas(PLs=(0, 2, 3, 4, 5), **kw):
     for nombre, args in corridas:
         r = resolver(**args, **kw)
         filas.append(dict(politica=nombre, estado=r["status"], costo=r["obj"], **r["costo"],
-                          postergables=r["postergables"], **r["costo_detalle"], **r["kpis"]))
+                          postergables=r["postergables"], **r["costo_detalle"], **r["kpis"], **r["tamano"]))
     return pd.DataFrame(filas).set_index("politica")
 
 
@@ -232,9 +242,13 @@ def sensibilidad(parametro="T_prod", valores=(21, 42, 63, 84), PLs=(0, 2, 3, 4, 
 # ---------------------------------------------------------------------------
 # Visualizacion
 # ---------------------------------------------------------------------------
-# Paleta categorica validada (orden fijo, segura para daltonismo en pares adyacentes)
-PALETA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
-SECUENCIAL = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#2a78d6", "#1c5cab", "#104281", "#0d366b"]
+# Color principal de la presentacion (vino). Se usa para destacar la politica hibrida y en graficos de una serie.
+VINO = "#6d2e46"
+# Paleta categorica en tonos de la presentacion (orden fijo, validada para daltonismo en pares adyacentes)
+PALETA = ["#8e3d5e", "#d1962a", "#0f9479", "#e58fae", "#3f6fc4"]
+# Rampa continua (claro -> oscuro) para el uso de la linea en el arbol
+SECUENCIAL = ["#f4e4eb", "#e6c3d1", "#d59db4", "#bf7393", "#a14f71", "#6d2e46", "#4f1f32"]
+FONDO_DESTACADO = "#f5e8ee"
 SUPERFICIE, TEXTO, TEXTO_2, GRILLA = "#ffffff", "#0b0b0b", "#52514e", "#e6e5e0"
 
 # Cada concepto conserva su color en todos los graficos
@@ -377,26 +391,34 @@ def graficar_demanda(datos_mod=datos):
     return fig
 
 
-def graficar_arbol(res):
-    """Arbol de escenarios: color = % de horas de linea usadas en cada nodo."""
+def _nombre_res(res):
+    return "Contra pedido" if res["contra_pedido"] else _nombre_politica(res["PL"])
+
+
+def graficar_arbol(res, inventario=True):
+    """Arbol de escenarios: color = % de horas de linea usadas en cada nodo.
+    Con inventario=True cada nodo muestra tambien las botellas guardadas al final del nodo."""
     from matplotlib.colors import LinearSegmentedColormap
     G = nx.DiGraph([(p, n) for n, p in res["padre"].items() if p is not None])
     pos = _posiciones(res)
     nd, pr = res["nodos"], res["productos"]
     T = res["params"]["T_prod"]
     atraso = pr.groupby("nodo")["atraso"].sum()
+    inv = pr.groupby("nodo")["inv_terminado"].sum() + res["vinos"].groupby("nodo")["inv_sin_etiq"].sum()
     uso = {n: nd.loc[n, "horas"] / T for n in G.nodes}
     cmap = LinearSegmentedColormap.from_list("uso", SECUENCIAL)
 
-    fig, ax = plt.subplots(figsize=(11, 9))
-    nx.draw_networkx_edges(G, pos, ax=ax, node_size=4200, arrows=True, arrowstyle="-|>", arrowsize=12,
+    tam = 5200 if inventario else 4200
+    fig, ax = plt.subplots(figsize=(11, 9.5))
+    nx.draw_networkx_edges(G, pos, ax=ax, node_size=tam, arrows=True, arrowstyle="-|>", arrowsize=12,
                            edge_color="#b5b4ae", width=1.2)
-    nodos = nx.draw_networkx_nodes(G, pos, ax=ax, node_size=4200, node_color=[uso[n] for n in G.nodes],
+    nodos = nx.draw_networkx_nodes(G, pos, ax=ax, node_size=tam, node_color=[uso[n] for n in G.nodes],
                                    cmap=cmap, vmin=0, vmax=1, edgecolors=SUPERFICIE, linewidths=2)
     for n, (x, y) in pos.items():
         claro = uso[n] > 0.45
         txt = (f"Nodo {n}\nπ = {_num(nd.loc[n, 'prob'], 2)}\n{_num(nd.loc[n, 'horas'], 1)} h"
-               + (f"\natraso {_num(atraso[n])}" if atraso[n] > 0.5 else ""))
+               + (f"\ninv. {_corto(inv[n])}" if inventario else "")
+               + (f"\natraso {_corto(atraso[n])}" if atraso[n] > 0.5 else ""))
         ax.text(x, y, txt, ha="center", va="center", fontsize=8, linespacing=1.4,
                 color=SUPERFICIE if claro else TEXTO, fontweight="bold" if claro else "normal")
     for p in sorted({x for x, _ in pos.values()}):
@@ -406,7 +428,8 @@ def graficar_arbol(res):
     cb.set_label(f"Uso de la línea (% de {_num(T)} h)")
     cb.ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
     cb.outline.set_visible(False)
-    ax.set_title("Árbol de escenarios: probabilidad y horas de línea usadas", pad=28)
+    subt = "probabilidad, horas de línea e inventario al cierre" if inventario else "probabilidad y horas de línea usadas"
+    ax.set_title(f"Árbol de escenarios — {_nombre_res(res)}: {subt}", pad=28)
     ax.axis("off")
     ax.margins(x=0.08, y=0.08)
     plt.tight_layout()
@@ -454,13 +477,15 @@ def graficar_decisiones(res):
     # Horas de linea
     a = ax[1, 1]
     T = res["params"]["T_prod"]
-    a.bar(range(len(nodos)), nd["horas"], width=0.7, color=PALETA[0])
+    a.bar(range(len(nodos)), nd["horas"], width=0.7, color=VINO)
     a.axhline(T, color=TEXTO_2, lw=1.2)
     a.annotate(f"Capacidad: {_num(T)} h", (len(nodos) - 0.6, T), ha="right", va="bottom", fontsize=9,
                color=TEXTO_2, xytext=(0, 3), textcoords="offset points")
     k = int(nd["horas"].values.argmax())
-    a.annotate(f"{_num(nd['horas'].iloc[k], 1)} h ({nd['horas'].iloc[k] / T:.0%})", (k, nd["horas"].iloc[k]),
-               ha="center", va="bottom", fontsize=9, xytext=(0, 3), textcoords="offset points")
+    hk = nd["horas"].iloc[k]
+    # si la barra llega cerca de la capacidad, el rotulo va sobre la linea de capacidad para no taparla
+    a.annotate(f"{_num(hk, 1)} h ({hk / T:.0%})", (k, max(hk, T) if hk > 0.85 * T else hk), ha="center",
+               va="bottom", fontsize=9, fontweight="bold", xytext=(0, 3), textcoords="offset points")
     a.set_xticks(range(len(nodos)), [f"N{n}" for n in nodos]); a.grid(axis="x", visible=False)
     a.set_ylim(0, T * 1.15)
     a.set_title("Horas de línea usadas", pad=20); a.set_ylabel("Horas")
@@ -508,7 +533,7 @@ def tabla_comparacion(tabla):
     fmt["vs. A stock"] = lambda v: "—" if abs(v) < 1e-9 else ("+" if v > 0 else "−") + _num(abs(v) * 100) + " %"
     return (df.rename_axis("Política").style
             .format(fmt)
-            .apply(lambda f: ["font-weight: bold; background-color: #e6f0fb" if f.name == mejor else ""] * len(f),
+            .apply(lambda f: [f"font-weight: bold; background-color: {FONDO_DESTACADO}" if f.name == mejor else ""] * len(f),
                    axis=1))
 
 
@@ -553,7 +578,7 @@ def graficar_comparacion(tabla, factor_outlier=20):
     ax[0].set_title(titulo)
 
     a = ax[1]
-    colores = ["#b5b4ae" if p in omitidas else PALETA[0] for p in tabla.index]
+    colores = ["#c9c8c2" if p in omitidas else VINO for p in tabla.index]
     a.bar(range(len(tabla)), tabla["costo"], width=0.6, color=colores)
     a.set_yscale("log")
     a.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"${_num(v / 1e6, 0 if v >= 1e6 else 1)} MM"))
@@ -581,7 +606,7 @@ def graficar_sensibilidad(tabla, base=None):
         w = 0.8 / len(cols)
         for k, col in enumerate(cols):
             a.bar(x + (k - (len(cols) - 1) / 2) * w, df[col], width=w, label=col,
-                  color=PALETA[pols.index(col)], edgecolor=SUPERFICIE, linewidth=1)
+                  color=_color_pol(col), edgecolor=SUPERFICIE, linewidth=1)
         etiquetas = [f"{_num(v)} h" + ("\n(caso base)" if v == base else "") for v in niveles]
         a.set_xticks(x, etiquetas); a.grid(axis="x", visible=False)
         a.set_xlabel(DESCRIPCION_PARAMS.get(param, param) + f" ({param})")
@@ -631,7 +656,7 @@ _FMT_KPI = {**{k: _pct for k in ["Nivel de servicio", "Periodos sin atrasos", "U
                                  "Utilización máxima", "Horas en set-up"]},
             **{k: (lambda v: _num(v, 1)) for k in GRUPOS_KPI["Set-ups esperados"]},
             "Cobertura (periodos de demanda)": lambda v: _num(v, 2)}
-_DESTACADO = "font-weight: bold; background-color: #e6f0fb"
+_DESTACADO = f"font-weight: bold; background-color: {FONDO_DESTACADO}"
 
 
 def tabla_costos(tabla):
@@ -661,7 +686,7 @@ def tabla_kpis(tabla):
 
 def _barras_politicas(a, serie, fmt, omitidas=()):
     """Barras de una sola serie por politica, con rotulo del valor."""
-    colores = ["#b5b4ae" if p in omitidas else PALETA[0] for p in serie.index]
+    colores = ["#c9c8c2" if p in omitidas else VINO for p in serie.index]
     a.bar(range(len(serie)), serie.values, width=0.6, color=colores)
     for k, v in enumerate(serie.values):
         a.annotate(fmt(v), (k, v), ha="center", va="bottom", fontsize=8.5, xytext=(0, 2), textcoords="offset points")
@@ -767,7 +792,7 @@ def graficar_sensibilidad_kpis(det, base=None):
     for a, (col, titulo, es_pct) in zip(ax, paneles):
         tab = det[col].unstack("politica")[pols] * (100 if es_pct else 1)
         for k, p in enumerate(pols):
-            a.bar(x + (k - (len(pols) - 1) / 2) * w, tab.loc[niveles, p], width=w, color=PALETA[k], label=p,
+            a.bar(x + (k - (len(pols) - 1) / 2) * w, tab.loc[niveles, p], width=w, color=_color_pol(p), label=p,
                   edgecolor=SUPERFICIE, linewidth=1)
         a.set_xticks(x, [f"{_num(v)} h" + ("\n(caso base)" if v == base else "") for v in niveles])
         a.grid(axis="x", visible=False)
@@ -783,3 +808,220 @@ def graficar_sensibilidad_kpis(det, base=None):
                  x=0.01, ha="left", fontsize=14, fontweight="bold")
     plt.tight_layout(rect=(0, 0, 1, 0.9))
     return fig
+
+
+# ---------------------------------------------------------------------------
+# Graficos para la presentacion: caso base (A stock) vs. hibrida
+# ---------------------------------------------------------------------------
+# Cada politica tiene siempre el mismo color: grises para contra pedido y a stock, y una rampa de vino
+# (validada como rampa ordinal) para las hibridas, mas oscura mientras mas etiquetas se postergan.
+COLOR_POLITICA = {"Contra pedido": "#c9c8c2", "A stock": "#8f8e88", "Híbrida PL=2": "#d38aa6",
+                  "Híbrida PL=3": "#b45e80", "Híbrida PL=4": "#8e3d5e", "Híbrida PL=5": VINO}
+
+
+AHORRO, COSTO_EXTRA = PALETA[2], PALETA[1]
+
+
+def _color_pol(p):
+    return COLOR_POLITICA.get(p, VINO)
+
+
+def graficar_politicas(tabla, politicas=("Contra pedido", "A stock", "Híbrida PL=5")):
+    """Costo esperado de las tres politicas (escala log) con el desglose escrito bajo cada barra."""
+    t = tabla.loc[list(politicas)]
+    fig, ax = plt.subplots(figsize=(11, 5.8))
+    x = range(len(t))
+    ax.bar(x, t["costo"], width=0.55, color=[_color_pol(p) for p in t.index])
+    ax.set_yscale("log")
+    ax.set_ylim(t["costo"].min() / 3, t["costo"].max() * 6)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"${_num(v / 1e6, 0 if v >= 1e6 else 1)} MM"))
+    ref = t.loc["A stock", "costo"] if "A stock" in t.index else None
+    for k, (pol, fila) in enumerate(t.iterrows()):
+        txt = f"${_corto(fila['costo'])}"
+        if ref and pol != "A stock":
+            r = fila["costo"] / ref
+            txt += f"\n{_num(r)}× el caso base" if r >= 2 else f"\n{_pct(r - 1)} vs. caso base".replace("-", "−")
+        elif pol == "A stock":
+            txt += "\n(caso base)"
+        ax.annotate(txt, (k, fila["costo"]), ha="center", va="bottom", fontsize=11, fontweight="bold",
+                    xytext=(0, 4), textcoords="offset points", linespacing=1.4)
+        partes = [("atrasos", fila["Atrasos"]), ("inventario", fila["inventario"]), ("set-ups", fila["setups"])]
+        mayor = max(partes, key=lambda z: z[1])
+        ax.annotate(f"{_pct(mayor[1] / fila['costo'])} {mayor[0]}", (k, 0), xycoords=("data", "axes fraction"),
+                    xytext=(0, -38), textcoords="offset points", ha="center", va="top", fontsize=9, color=TEXTO_2)
+    ax.set_xticks(list(x), t.index, fontsize=11)
+    ax.grid(axis="x", visible=False)
+    ax.set_ylabel("Costo esperado (escala log)")
+    ax.set_title("Costo esperado de cada política")
+    plt.tight_layout()
+    return fig
+
+
+_KPIS_PRES = [  # (columna, titulo, formato, menor es mejor)
+    ("costo", "Costo esperado", lambda v: "$" + _corto(v), True),
+    ("Nivel de servicio", "Nivel de servicio", lambda v: _pct(v, 1), False),
+    ("Inventario promedio (total)", "Inventario promedio (botellas)", _num, True),
+    ("Cobertura (periodos de demanda)", "Cobertura (periodos de demanda)", lambda v: _num(v, 2), True),
+    ("Set-ups (total)", "Set-ups esperados", lambda v: _num(v, 1), True),
+    ("Utilización media", "Utilización media de la línea", _pct, None),
+    ("Utilización máxima", "Utilización máxima (nodo más cargado)", _pct, None),
+    ("Horas en set-up", "Horas de línea en set-up", _pct, True),
+]
+
+
+_KPIS_PCT = {"Nivel de servicio", "Utilización media", "Utilización máxima", "Horas en set-up"}
+
+
+def _variacion(b, a, col=None):
+    """Variacion de b a a: en puntos porcentuales si el KPI ya es un %, si no en % relativo."""
+    if abs(a - b) < 1e-9 or (col is None and abs(a - b) < 0.5):
+        return "sin cambio"
+    if col in _KPIS_PCT:
+        d = _num(100 * (a - b))
+        return ("+" if a > b else "") + d.replace("-", "−") + " pp"
+    if not b:
+        return "nuevo"
+    return ("+" if a > b else "") + _pct(a / b - 1).replace("-", "−")
+
+
+def tabla_base_vs_alternativa(tabla, base="A stock", alt="Híbrida PL=5"):
+    """KPIs y costo del caso base vs. la alternativa, con la variacion."""
+    filas = []
+    for col, nombre, fmt, _ in _KPIS_PRES:
+        b, a = tabla.loc[base, col], tabla.loc[alt, col]
+        filas.append({"KPI": nombre, base: fmt(b), alt: fmt(a), "Variación": _variacion(b, a, col)})
+    for col in COMPONENTES_COSTO:
+        b, a = tabla.loc[base, col], tabla.loc[alt, col]
+        filas.append({"KPI": f"Costo: {col.lower()}", base: "$" + _num(b), alt: "$" + _num(a),
+                      "Variación": _variacion(b, a)})
+    df = pd.DataFrame(filas).set_index("KPI")
+    return df.style.set_properties(subset=[alt], **{"font-weight": "bold", "background-color": FONDO_DESTACADO})
+
+
+def graficar_base_vs_alternativa(tabla, base="A stock", alt="Híbrida PL=5"):
+    """Un panel por KPI: caso base (gris) vs. alternativa (azul), con la variacion en el titulo."""
+    fig, ax = plt.subplots(2, 4, figsize=(16, 7.8))
+    for a, (col, titulo, fmt, menor_mejor) in zip(ax.flat, _KPIS_PRES):
+        vals = [tabla.loc[base, col], tabla.loc[alt, col]]
+        a.bar([0, 1], vals, width=0.6, color=[_color_pol(base), _color_pol(alt)])
+        for k, v in enumerate(vals):
+            a.annotate(fmt(v), (k, v), ha="center", va="bottom", fontsize=10, fontweight="bold" if k else "normal",
+                       xytext=(0, 3), textcoords="offset points")
+        a.set_xticks([0, 1], [base, alt])
+        a.set_yticks([])
+        a.grid(False)
+        a.spines["left"].set_visible(False)
+        a.set_ylim(0, max(vals) * 1.3 if max(vals) > 0 else 1)
+        cambio = _variacion(vals[0], vals[1], col)
+        a.set_title(f"{titulo}\n{cambio}", fontsize=10.5, linespacing=1.5)
+    fig.suptitle(f"Caso base ({base}) vs. {alt}", x=0.01, ha="left", fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    return fig
+
+
+def graficar_puente_costos(tabla, base="A stock", alt="Híbrida PL=5"):
+    """Grafico de cascada: como se pasa del costo del caso base al de la alternativa, componente a componente."""
+    pasos = [(c, tabla.loc[alt, c] - tabla.loc[base, c]) for c in COMPONENTES_COSTO]
+    pasos = [(c, d) for c, d in pasos if abs(d) >= 1]
+    etiquetas = [base] + [c for c, _ in pasos] + [alt]
+    fig, ax = plt.subplots(figsize=(13, 5.8))
+    nivel = tabla.loc[base, "costo"]
+    ax.bar(0, nivel, width=0.6, color=_color_pol(base))
+    ax.annotate("$" + _corto(nivel), (0, nivel), ha="center", va="bottom", xytext=(0, 3), textcoords="offset points",
+                fontsize=10)
+    for k, (c, d) in enumerate(pasos, start=1):
+        color = AHORRO if d < 0 else COSTO_EXTRA
+        ax.bar(k, abs(d), bottom=min(nivel, nivel + d), width=0.6, color=color)
+        ax.plot([k - 1 + 0.3, k - 0.3], [nivel, nivel], color=TEXTO_2, lw=0.8)
+        signo = "−" if d < 0 else "+"
+        ax.annotate(f"{signo}${_corto(abs(d))}", (k, max(nivel, nivel + d)), ha="center", va="bottom",
+                    xytext=(0, 3), textcoords="offset points", fontsize=10, fontweight="bold")
+        nivel += d
+    k = len(pasos) + 1
+    ax.plot([k - 1 + 0.3, k - 0.3], [nivel, nivel], color=TEXTO_2, lw=0.8)
+    ax.bar(k, nivel, width=0.6, color=_color_pol(alt))
+    ahorro = 1 - nivel / tabla.loc[base, "costo"]
+    ax.annotate(f"${_corto(nivel)}\n(−{_pct(ahorro)})", (k, nivel), ha="center", va="bottom", xytext=(0, 3),
+                textcoords="offset points", fontsize=10, fontweight="bold")
+    etiquetas = [e.replace(" + ", " +\n").replace("Set-up ", "Set-up\n").replace("Inventario ", "Inventario\n")
+                 for e in etiquetas]
+    ax.set_xticks(range(len(etiquetas)), etiquetas, fontsize=9)
+    ax.grid(axis="x", visible=False)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: "$" + _corto(v)))
+    ax.margins(y=0.12)
+    ax.set_ylabel("Costo esperado")
+    from matplotlib.patches import Patch
+    ax.legend(handles=[Patch(color=AHORRO, label="Ahorro"), Patch(color=COSTO_EXTRA, label="Costo adicional")],
+              loc="upper right")
+    ax.set_title(f"De dónde viene el ahorro: {base} → {alt}")
+    plt.tight_layout()
+    return fig
+
+
+def graficar_inventario_nodos(res_base, res_alt):
+    """Inventario al cierre de cada nodo, caso base vs. alternativa, separado en terminado y sin etiqueta."""
+    import numpy as np
+    nombres = [_nombre_res(res_base), _nombre_res(res_alt)]
+    nodos = list(res_base["nodos"].index)
+    x = np.arange(len(nodos))
+    w = 0.38
+    fig, ax = plt.subplots(figsize=(13, 5.5))
+    tope = 0
+    for k, (res, nombre) in enumerate(zip((res_base, res_alt), nombres)):
+        term = res["productos"].groupby("nodo")["inv_terminado"].sum().loc[nodos]
+        sin = res["vinos"].groupby("nodo")["inv_sin_etiq"].sum().loc[nodos]
+        dx = (k - 0.5) * w
+        c = _color_pol(nombre)
+        ax.bar(x + dx, term, width=w, color=c, edgecolor=SUPERFICIE, linewidth=1,
+               label=f"{nombre}: terminado")
+        ax.bar(x + dx, sin, bottom=term, width=w, color=c, edgecolor=SUPERFICIE, linewidth=1,
+               hatch="//", label=f"{nombre}: sin etiqueta")
+        tope = max(tope, (term + sin).max())
+    ax.set_xticks(x, [f"N{n}" for n in nodos])
+    ax.grid(axis="x", visible=False)
+    _separar_periodos(ax, nodos, res_base["padre"])
+    _eje_miles(ax)
+    ax.set_ylim(0, tope * 1.1)
+    ax.set_ylabel("Botellas guardadas al cierre del nodo")
+    handles, labels = ax.get_legend_handles_labels()
+    usados = [(h, l) for h, l in zip(handles, labels)
+              if not (l.endswith("sin etiqueta") and l.startswith(nombres[0]) and
+                      res_base["vinos"]["inv_sin_etiq"].sum() < 0.5)
+              and not (l.endswith("terminado") and l.startswith(nombres[1]) and
+                       res_alt["productos"]["inv_terminado"].sum() < 0.5)]
+    ax.legend(*zip(*usados), loc="upper right")
+    ax.set_title("Inventario al cierre de cada escenario", pad=22)
+    plt.tight_layout()
+    return fig
+
+
+def tabla_tiempos(tabla):
+    """Tamano del modelo y tiempos de resolucion por politica."""
+    cols = ["Variables", "Variables enteras/binarias", "Restricciones", "Tiempo construcción (s)",
+            "Tiempo resolución (s)"]
+    df = tabla[cols + ["estado"]].rename(columns={"estado": "Estado"}).rename_axis("Política")
+    return df.style.format({c: _num for c in cols[:3]} | {c: (lambda v: _num(v, 2)) for c in cols[3:]})
+
+
+def info_equipo():
+    """Procesador, nucleos y RAM del equipo, y versiones de Python y del solver."""
+    import os, platform, sys, importlib.metadata as md
+    cpu = platform.processor()
+    ram = None
+    try:
+        if os.name == "nt":
+            import subprocess
+            ps = ("$c=Get-CimInstance Win32_Processor; $s=Get-CimInstance Win32_ComputerSystem; "
+                  "$c.Name.Trim(); $c.NumberOfCores; $c.NumberOfLogicalProcessors; $s.TotalPhysicalMemory")
+            out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
+                                 timeout=20).stdout.split("\n")
+            out = [o.strip() for o in out if o.strip()]
+            cpu = f"{out[0]} ({out[1]} núcleos / {out[2]} hilos)"
+            ram = int(out[3]) / 1024 ** 3
+    except Exception:
+        pass
+    filas = {"Procesador": cpu, "Memoria RAM": f"{_num(ram, 1)} GB" if ram else "—",
+             "Sistema operativo": f"{platform.system()} {platform.release()}",
+             "Python": platform.python_version(),
+             "PuLP / HiGHS": f"{md.version('pulp')} / {md.version('highspy')}"}
+    return pd.Series(filas, name="Equipo").to_frame()
