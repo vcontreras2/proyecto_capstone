@@ -17,15 +17,28 @@ import networkx as nx
 
 import datos
 
+# Semilla del solver (HiGHS random_seed). Es la unica fuente de aleatoriedad del proyecto: los datos y los arboles
+# son deterministas. En los problemas dificiles que se detienen por limite de tiempo la semilla cambia mucho la
+# solucion encontrada, por eso se fija. 0 es el valor por defecto de HiGHS.
+SEMILLA = 0
+
 
 # ---------------------------------------------------------------------------
 # Construccion y resolucion
 # ---------------------------------------------------------------------------
-def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose=False, **override):
+def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose=False, fijar=None, estado_inicial=None,
+             semilla=None, **override):
     """Construye y resuelve el modelo. PL=0 -> a stock; PL>=2 -> hibrida.
     contra_pedido=True agrega R15 (sbl = 0) y fuerza PL=0.
-    `override` permite cambiar parametros de la Tabla 2, ej. Cb_bl=1000, T_prod=100."""
-    P = {**datos_mod.PARAMS, **override}
+    fijar: decisiones del nodo raiz a fijar (para el EEV), dict con claves opcionales
+        'wbl' {(i,j): v}, 'wb' {i: v}, 'wl' {(i,j): v}, 'zpos' {(i,j): 0/1}.
+    estado_inicial: estado previo al nodo raiz (por defecto vacio); ver el comentario del nodo ficticio (R6).
+    semilla: semilla del solver (por defecto modelo.SEMILLA); misma semilla y misma maquina dan la misma solucion.
+    `override` permite cambiar parametros de la Tabla 2, ej. Cb_bl=1000, T_prod=100, alfa=0.5."""
+    P = {"alfa": 0.0, **datos_mod.PARAMS, **override}
+    if not 0 <= P["alfa"] < 1:
+        raise ValueError(f"alfa debe cumplir 0 <= alfa < 1 (recibido {P['alfa']}): con alfa >= 1 el modelo "
+                         "sobreproduce para acumular valor residual.")
     padre, pi, D, J = datos_mod.PADRE, datos_mod.PROB, datos_mod.DEM, datos_mod.ETIQUETAS
     if contra_pedido:
         PL = 0
@@ -58,12 +71,16 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
     zpos = V("zpos", IJ, cat="Binary")
 
     # Valores del nodo ficticio (R6)
-    W0 = {(i, j): D[(i, j, raiz)] for i, j in IJ}
-    gwb = lambda i, n: 0 if n == AUX else wb[i, n]
-    gwbl = lambda i, j, n: W0[i, j] if n == AUX else wbl[i, j, n]
-    gsb = lambda i, n: 0 if n == AUX else sb[i, n]
-    gsbl = lambda i, j, n: 0 if n == AUX else sbl[i, j, n]
-    gbbl = lambda i, j, n: 0 if n == AUX else bbl[i, j, n]
+    # Por defecto: sin inventario ni atrasos y llega la produccion predefinida W0 = D del periodo 1.
+    # `estado_inicial` permite partir desde otro estado (horizonte rodante): claves 'sb' {i}, 'sbl' {(i,j)},
+    # 'bbl' {(i,j)}, 'wb' {i} y 'wbl' {(i,j)} (lo que llega al nodo raiz desde el periodo anterior).
+    ini = estado_inicial or {}
+    W0 = ini.get("wbl") if estado_inicial is not None else {(i, j): D[(i, j, raiz)] for i, j in IJ}
+    gwb = lambda i, n: ini.get("wb", {}).get(i, 0) if n == AUX else wb[i, n]
+    gwbl = lambda i, j, n: W0.get((i, j), 0) if n == AUX else wbl[i, j, n]
+    gsb = lambda i, n: ini.get("sb", {}).get(i, 0) if n == AUX else sb[i, n]
+    gsbl = lambda i, j, n: ini.get("sbl", {}).get((i, j), 0) if n == AUX else sbl[i, j, n]
+    gbbl = lambda i, j, n: ini.get("bbl", {}).get((i, j), 0) if n == AUX else bbl[i, j, n]
 
     # Objetivo (FO)
     m += pulp.lpSum(
@@ -71,7 +88,21 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
             pulp.lpSum(P["Cz_b"] * zb[i, n] + P["Cs_b"] * sb[i, n] for i in I)
             + pulp.lpSum(P["Cz_bl"] * zbl[i, j, n] + P["Cz_l"] * zl[i, j, n]
                          + P["Cs_bl"] * sbl[i, j, n] + P["Cb_bl"] * bbl[i, j, n] for i, j in IJ))
-        for n in N)
+        for n in N) - pulp.lpSum(   # valor residual del inventario al final del horizonte (solo hojas)
+        pi[n] * P["alfa"] * (
+            pulp.lpSum(P["Cs_b"] * sb[i, n] for i in I)
+            + pulp.lpSum(P["Cs_bl"] * sbl[i, j, n] for i, j in IJ))
+        for n in L)
+
+    # Decisiones fijas del nodo raiz (EEV)
+    for k, v in (fijar or {}).get("wbl", {}).items():
+        m += wbl[k[0], k[1], raiz] == v, f"fijo_wbl_{k[0]}_{k[1]}"
+    for k, v in (fijar or {}).get("wb", {}).items():
+        m += wb[k, raiz] == v, f"fijo_wb_{k}"
+    for k, v in (fijar or {}).get("wl", {}).items():
+        m += wl[k[0], k[1], raiz] == v, f"fijo_wl_{k[0]}_{k[1]}"
+    for k, v in (fijar or {}).get("zpos", {}).items():
+        m += zpos[k] == v, f"fijo_zpos_{k[0]}_{k[1]}"
 
     for n in N:
         m += pulp.lpSum(y[i, n] for i in I) <= P["K_tank"], f"R1_{n}"
@@ -100,11 +131,20 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
     m += pulp.lpSum(zpos.values()) <= PL, "R12"
 
     t1 = time.perf_counter()
-    m.solve(pulp.HiGHS(msg=verbose, timeLimit=tiempo_max))
+    m.solve(pulp.HiGHS(msg=verbose, timeLimit=tiempo_max, random_seed=SEMILLA if semilla is None else semilla))
     t2 = time.perf_counter()
     status = pulp.LpStatus[m.status]
+    # PuLP informa "Optimal" aunque HiGHS se detenga por limite de tiempo: se corrige con el estado real del solver
+    brecha = 0.0
+    try:
+        hs = m.solverModel
+        if "TimeLimit" in str(hs.getModelStatus()):
+            status = "Time limit" if m.sol_status == pulp.LpSolutionIntegerFeasible else "Time limit (sin solucion)"
+        brecha = hs.getInfo().mip_gap
+    except Exception:
+        pass
     variables = m.variables()
-    tamano = {"Variables": len(variables),
+    tamano = {"Brecha MIP": brecha, "Variables": len(variables),
               "Variables enteras/binarias": sum(v.cat == pulp.LpInteger for v in variables),
               "Restricciones": len(m.constraints),
               "Tiempo construcción (s)": t1 - t0, "Tiempo resolución (s)": t2 - t1}
@@ -140,7 +180,10 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
         + sum(pi[n] * (P["Cz_bl"] * val(zbl[i, j, n]) + P["Cz_l"] * val(zl[i, j, n])) for n in N for i, j in IJ),
         inventario=sum(pi[n] * P["Cs_b"] * val(sb[i, n]) for n in N for i in I)
         + sum(pi[n] * P["Cs_bl"] * val(sbl[i, j, n]) for n in N for i, j in IJ),
-        atrasos=sum(pi[n] * P["Cb_bl"] * val(bbl[i, j, n]) for n in N for i, j in IJ))
+        atrasos=sum(pi[n] * P["Cb_bl"] * val(bbl[i, j, n]) for n in N for i, j in IJ),
+        valor_residual=-sum(pi[n] * P["alfa"] * (
+            sum(P["Cs_b"] * val(sb[i, n]) for i in I) + sum(P["Cs_bl"] * val(sbl[i, j, n]) for i, j in IJ))
+            for n in L))
 
     # los 6 terminos de la funcion objetivo, por separado (valor esperado)
     E = lambda f: sum(pi[n] * f(n) for n in N)
@@ -151,6 +194,7 @@ def resolver(PL=2, contra_pedido=False, datos_mod=datos, tiempo_max=300, verbose
         "Inventario sin etiqueta": E(lambda n: sum(P["Cs_b"] * val(sb[i, n]) for i in I)),
         "Inventario terminado": E(lambda n: sum(P["Cs_bl"] * val(sbl[i, j, n]) for i, j in IJ)),
         "Atrasos": E(lambda n: sum(P["Cb_bl"] * val(bbl[i, j, n]) for i, j in IJ)),
+        "Valor residual": costo["valor_residual"],
     }
     kpi = _calcular_kpis(nodos, productos, vinos, P)
 
@@ -166,7 +210,8 @@ def resumen(res):
     nom = "Contra pedido" if res["contra_pedido"] else _nombre_politica(res["PL"])
     post = ", ".join(_nombre_producto(i, j) for i, j in res["postergables"]) or "ninguno"
     print(f"Política: {nom}  |  estado: {res['status']}  |  costo esperado: ${_num(res['obj'])}")
-    print(f"  Set-ups ${_num(c['setups'])}  |  Inventario ${_num(c['inventario'])}  |  Atrasos ${_num(c['atrasos'])}")
+    print(f"  Set-ups ${_num(c['setups'])}  |  Inventario ${_num(c['inventario'])}  |  Atrasos ${_num(c['atrasos'])}"
+          + (f"  |  Valor residual -${_num(-c['valor_residual'])}" if c["valor_residual"] else ""))
     print(f"  Productos postergables elegidos: {post}")
     k = res["kpis"]
     print(f"  Nivel de servicio {_pct(k['Nivel de servicio'], 1)}  |  Utilización media {_pct(k['Utilización media'])}"
@@ -186,7 +231,8 @@ def comparar_politicas(PLs=(0, 2, 3, 4, 5), **kw):
 
 
 COMPONENTES_COSTO = ["Set-up embotellado sin etiqueta", "Set-up embotellado + etiquetado",
-                     "Set-up etiquetado posterior", "Inventario sin etiqueta", "Inventario terminado", "Atrasos"]
+                     "Set-up etiquetado posterior", "Inventario sin etiqueta", "Inventario terminado", "Atrasos",
+                     "Valor residual"]
 
 
 def _calcular_kpis(nodos, productos, vinos, P):
@@ -284,6 +330,17 @@ def aplicar_estilo():
 
 
 aplicar_estilo()
+
+
+def exportar_figura(fig, nombre, carpeta="figuras", dpi=300):
+    """Guarda la figura para pegarla en un PPT sin perder calidad:
+    PNG a `dpi` (300 por defecto) y SVG vectorial (en PowerPoint: Insertar > Imagenes; el SVG no se pixela).
+    Uso en el notebook: modelo.exportar_figura(fig, 'arbol_PL5')."""
+    import os
+    os.makedirs(os.path.join(carpeta, "svg"), exist_ok=True)
+    fig.savefig(os.path.join(carpeta, nombre + ".png"), dpi=dpi)
+    with plt.rc_context({"svg.fonttype": "path"}):      # texto como trazos: se ve igual sin la tipografia
+        fig.savefig(os.path.join(carpeta, "svg", nombre + ".svg"))
 
 
 def _num(x, dec=0):

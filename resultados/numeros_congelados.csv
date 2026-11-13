@@ -1,0 +1,246 @@
+﻿seccion,concepto,valor,unidad,fuente
+Caso base,Costo esperado PL=0,1918302.4,$,sens_valor_residual.csv
+Caso base,Costo esperado PL=2,1071131.1499999997,$,sens_valor_residual.csv
+Caso base,Ahorro PL=2 vs A stock,44.16254965848972,%,sens_valor_residual.csv
+Caso base,Costo esperado PL=3,793479.033333333,$,sens_valor_residual.csv
+Caso base,Ahorro PL=3 vs A stock,58.63639469286318,%,sens_valor_residual.csv
+Caso base,Costo esperado PL=4,704615.9666666664,$,sens_valor_residual.csv
+Caso base,Ahorro PL=4 vs A stock,63.26877521152732,%,sens_valor_residual.csv
+Caso base,Costo esperado PL=5,617164.2666666667,$,sens_valor_residual.csv
+Caso base,Ahorro PL=5 vs A stock,67.8275819981945,%,sens_valor_residual.csv
+Tamano del modelo base,Variables,445.0,n,escalabilidad/escalabilidad.csv
+Tamano del modelo base,Variables enteras o binarias,159.0,n,escalabilidad/escalabilidad.csv
+Tamano del modelo base,Restricciones (PuLP; 331 sin contar las que fijan valores),380.0,n,escalabilidad/escalabilidad.csv
+Valor residual,Costo esperado alfa=0.5 PL=0,1513701.2000000002,$,sens_valor_residual.csv
+Valor residual,Costo esperado alfa=0.5 PL=5,525767.1333333337,$,sens_valor_residual.csv
+Valor residual,Ahorro PL=5 vs A stock alfa=0.5,65.26612165377594,%,sens_valor_residual.csv
+Valor residual,Costo esperado alfa=0.9 PL=0,1190020.2400000002,$,sens_valor_residual.csv
+Valor residual,Costo esperado alfa=0.9 PL=5,452649.42666666687,$,sens_valor_residual.csv
+Valor residual,Ahorro PL=5 vs A stock alfa=0.9,61.96288000390088,%,sens_valor_residual.csv
+VSS y EVPI,EV PL=0,15000.0,$,cotas_vss_evpi.csv
+VSS y EVPI,WS PL=0,15000.0,$,cotas_vss_evpi.csv
+VSS y EVPI,RP PL=0,1918302.4,$,cotas_vss_evpi.csv
+VSS y EVPI,EEV PL=0,350742811.0,$,cotas_vss_evpi.csv
+VSS y EVPI,VSS PL=0,348824508.6,$,cotas_vss_evpi.csv
+VSS y EVPI,EVPI PL=0,1903302.4,$,cotas_vss_evpi.csv
+VSS y EVPI,VSS/EEV PL=0,99.45307434968356,%,cotas_vss_evpi.csv
+VSS y EVPI,EVPI/RP PL=0,99.21805863350848,%,cotas_vss_evpi.csv
+VSS y EVPI,EV PL=5,11000.0,$,cotas_vss_evpi.csv
+VSS y EVPI,WS PL=5,11000.0,$,cotas_vss_evpi.csv
+VSS y EVPI,RP PL=5,617164.2666666667,$,cotas_vss_evpi.csv
+VSS y EVPI,EEV PL=5,212102246.06666648,$,cotas_vss_evpi.csv
+VSS y EVPI,VSS PL=5,211485081.7999998,$,cotas_vss_evpi.csv
+VSS y EVPI,EVPI PL=5,606164.2666666667,$,cotas_vss_evpi.csv
+VSS y EVPI,VSS/EEV PL=5,99.70902511495672,%,cotas_vss_evpi.csv
+VSS y EVPI,EVPI/RP PL=5,98.21765442458108,%,cotas_vss_evpi.csv
+VSS y EVPI,VSS PL=0 costo de atraso=1500,34118448.60000001,$,cotas_por_costo_atraso.csv
+VSS y EVPI,VSS PL=5 costo de atraso=1500,20886536.600000016,$,cotas_por_costo_atraso.csv
+VSS y EVPI,VSS PL=0 costo de atraso=5000,115708908.6,$,cotas_por_costo_atraso.csv
+VSS y EVPI,VSS PL=5 costo de atraso=5000,70303161.20000006,$,cotas_por_costo_atraso.csv
+VSS y EVPI,VSS PL=0 costo de atraso=15000,348824508.6,$,cotas_por_costo_atraso.csv
+VSS y EVPI,VSS PL=5 costo de atraso=15000,211485081.7999998,$,cotas_por_costo_atraso.csv
+Costo de atraso,"Costo A stock (84 h, atraso 1500)",1918302.4,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (84 h, atraso 1500)",617164.2666666667,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (84 h, atraso 1500)",67.8275819981945,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (84 h, atraso 5000)",1918302.4,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (84 h, atraso 5000)",617164.2666666667,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (84 h, atraso 5000)",67.8275819981945,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (84 h, atraso 15000)",1918302.4,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (84 h, atraso 15000)",617164.2666666667,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (84 h, atraso 15000)",67.8275819981945,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (63 h, atraso 1500)",9061313.114285702,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (63 h, atraso 1500)",623914.2666666667,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (63 h, atraso 1500)",93.11452701393765,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (63 h, atraso 5000)",26303063.114285696,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (63 h, atraso 5000)",623914.2666666667,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (63 h, atraso 5000)",97.62797867322226,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (63 h, atraso 15000)",75565205.97142845,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (63 h, atraso 15000)",623914.2666666666,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (63 h, atraso 15000)",99.17433657640981,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (42 h, atraso 1500)",124519352.87857138,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (42 h, atraso 1500)",37692617.78095231,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (42 h, atraso 1500)",69.7295103856592,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (42 h, atraso 5000)",413752314.545238,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (42 h, atraso 5000)",124534117.9,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (42 h, atraso 5000)",69.90128791499873,%,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo A stock (42 h, atraso 15000)",1240132205.0214286,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Costo PL=5 (42 h, atraso 15000)",372624352.0666668,$,sens_costo_atraso_x_capacidad.csv
+Costo de atraso,"Ahorro PL=5 vs A stock (42 h, atraso 15000)",69.95285256218081,%,sens_costo_atraso_x_capacidad.csv
+Variabilidad,Costo A stock (arbol base),1918302.4,$,sens_variabilidad.csv
+Variabilidad,Ahorro PL=2 vs A stock (arbol base),44.16254965848972,%,sens_variabilidad.csv
+Variabilidad,Ahorro PL=5 vs A stock (arbol base),67.8275819981945,%,sens_variabilidad.csv
+Variabilidad,Costo A stock (CV 10 %),450395.05273565714,$,sens_variabilidad.csv
+Variabilidad,Ahorro PL=2 vs A stock (CV 10 %),41.91307450562901,%,sens_variabilidad.csv
+Variabilidad,Ahorro PL=5 vs A stock (CV 10 %),63.78677815217444,%,sens_variabilidad.csv
+Variabilidad,Costo A stock (CV 30 %),1334159.390668808,$,sens_variabilidad.csv
+Variabilidad,Ahorro PL=2 vs A stock (CV 30 %),42.29803770188174,%,sens_variabilidad.csv
+Variabilidad,Ahorro PL=5 vs A stock (CV 30 %),64.97362442712902,%,sens_variabilidad.csv
+Variabilidad,Costo A stock (CV 50 %),2470782.9302234985,$,sens_variabilidad.csv
+Variabilidad,Ahorro PL=2 vs A stock (CV 50 %),41.677175864743056,%,sens_variabilidad.csv
+Variabilidad,Ahorro PL=5 vs A stock (CV 50 %),65.57583912616853,%,sens_variabilidad.csv
+Correlacion,"Costo A stock (CV 10 %, Ambos +)",397599.102390762,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 10 %, Ambos +)",15.506679985325512,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 10 %, Ambos +)",21.45887514439484,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 10 %, Ambos +)",27.956972142181147,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 10 %, Ambos +)",33.08182371120725,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 10 %, Ambos −)",332246.0253231736,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 10 %, Ambos −)",45.5542480306105,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 10 %, Ambos −)",52.37455800130808,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 10 %, Ambos −)",66.34315675885028,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 10 %, Ambos −)",88.84557446533712,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 10 %, V1 −, V2 +)",325504.7569644138,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 10 %, V1 −, V2 +)",21.219451169246717,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 10 %, V1 −, V2 +)",44.18789842901872,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 10 %, V1 −, V2 +)",51.458414149191,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 10 %, V1 −, V2 +)",59.395740649922836,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 10 %, V1 +, V2 −)",404340.37074952153,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 10 %, V1 +, V2 −)",37.43187408346185,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 10 %, V1 +, V2 −)",45.34436862408846,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 10 %, V1 +, V2 −)",52.68002264650878,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 10 %, V1 +, V2 −)",57.719431350501196,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 30 %, Ambos +)",1218365.68469895,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 30 %, Ambos +)",15.056483686913225,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 30 %, Ambos +)",21.450709636493393,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 30 %, Ambos +)",27.918460408094536,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 30 %, Ambos +)",33.24288537978474,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 30 %, Ambos −)",999588.155221396,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 30 %, Ambos −)",46.902489069296216,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 30 %, Ambos −)",53.90343501003596,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 30 %, Ambos −)",67.43204094533517,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 30 %, Ambos −)",91.07828499229274,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 30 %, V1 −, V2 +)",993636.6437354626,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 30 %, V1 −, V2 +)",20.65251620566756,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 30 %, V1 −, V2 +)",44.44039240149144,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 30 %, V1 −, V2 +)",52.280789116222635,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 30 %, V1 −, V2 +)",60.211339631831315,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 30 %, V1 +, V2 −)",1224317.1961848834,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 30 %, V1 +, V2 −)",38.293321918668596,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 30 %, V1 +, V2 −)",46.29616869633657,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 30 %, V1 +, V2 −)",53.276614739783604,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 30 %, V1 +, V2 −)",58.68542276510311,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 50 %, Ambos +)",2446232.2615696234,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 50 %, Ambos +)",15.418199881996564,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 50 %, Ambos +)",21.680504312077087,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 50 %, Ambos +)",27.74998128231072,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 50 %, Ambos +)",32.066243871847945,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 50 %, Ambos −)",1940966.8635060189,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 50 %, Ambos −)",46.723567472376814,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 50 %, Ambos −)",53.514748877146225,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 50 %, Ambos −)",69.8648986315117,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 50 %, Ambos −)",92.7200881122969,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 50 %, V1 −, V2 +)",1961168.7976772443,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 50 %, V1 −, V2 +)",22.902953081090317,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 50 %, V1 −, V2 +)",45.522712019686296,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 50 %, V1 −, V2 +)",53.540405931223354,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 50 %, V1 −, V2 +)",61.46762702539248,%,sens_correlacion.csv
+Correlacion,"Costo A stock (CV 50 %, V1 +, V2 −)",2426030.327398397,$,sens_correlacion.csv
+Correlacion,"Ahorro PL=2 vs A stock (CV 50 %, V1 +, V2 −)",37.38160038004268,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=3 vs A stock (CV 50 %, V1 +, V2 −)",45.76327539592663,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=4 vs A stock (CV 50 %, V1 +, V2 −)",52.928190025158564,%,sens_correlacion.csv
+Correlacion,"Ahorro PL=5 vs A stock (CV 50 %, V1 +, V2 −)",57.92561626969353,%,sens_correlacion.csv
+Escalabilidad,"Costo A stock (2 vinos, 3 periodos)",1918302.4,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (2 vinos, 3 periodos)",0.08110690000467,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (2 vinos, 3 periodos; estado Optimal)",617164.2666666667,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (2 vinos, 3 periodos; estado Optimal)",1.813119900005404,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (2 vinos, 3 periodos)",0.0,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (2 vinos, 3 periodos; estado Optimal)",67.82758199819452,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (2 vinos, 4 periodos)",2670752.453333334,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (2 vinos, 4 periodos)",1.113980599999195,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (2 vinos, 4 periodos; estado Optimal)",799423.0355555557,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (2 vinos, 4 periodos; estado Optimal)",13.405293500007248,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (2 vinos, 4 periodos)",0.009876542525355986,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (2 vinos, 4 periodos; estado Optimal)",70.06749784848816,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (2 vinos, 5 periodos)",3403118.6577777797,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (2 vinos, 5 periodos)",7.607004300007247,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (2 vinos, 5 periodos; estado Time limit)",1114916.3181481466,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (2 vinos, 5 periodos; estado Time limit)",180.10496389999753,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (2 vinos, 5 periodos)",12.982456354513,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (2 vinos, 5 periodos; estado Time limit)",67.2383942417047,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (3 vinos, 3 periodos)",3170001.7900000005,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (3 vinos, 3 periodos)",0.1244754000072134,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (3 vinos, 3 periodos; estado Optimal)",856312.6266666659,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (3 vinos, 3 periodos; estado Optimal)",2.6164304000121774,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (3 vinos, 3 periodos)",0.006094843743169842,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (3 vinos, 3 periodos; estado Optimal)",72.98699863930784,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (3 vinos, 4 periodos)",4441410.437333333,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (3 vinos, 4 periodos)",1.0837020999897504,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (3 vinos, 4 periodos; estado Optimal)",1096708.651555555,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (3 vinos, 4 periodos; estado Optimal)",40.07099069999822,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (3 vinos, 4 periodos)",0.00997752225581818,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (3 vinos, 4 periodos; estado Optimal)",75.30719875972486,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (3 vinos, 5 periodos)",5676934.272977775,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (3 vinos, 5 periodos)",14.09714990000066,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (3 vinos, 5 periodos; estado Time limit)",3085341.892567277,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (3 vinos, 5 periodos; estado Time limit)",180.14572719999703,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (3 vinos, 5 periodos)",57.39954884668143,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (3 vinos, 5 periodos; estado Time limit)",45.65126626084937,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (4 vinos, 3 periodos)",3750714.62,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (4 vinos, 3 periodos)",0.377075500000501,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (4 vinos, 3 periodos; estado Optimal)",1243179.2133333334,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (4 vinos, 3 periodos; estado Optimal)",3.3791142999980366,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (4 vinos, 3 periodos)",0.0,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (4 vinos, 3 periodos; estado Optimal)",66.85487062373907,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (4 vinos, 4 periodos)",5215690.266666666,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (4 vinos, 4 periodos)",1.8594137000036424,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (4 vinos, 4 periodos; estado Time limit)",1670928.7374365097,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (4 vinos, 4 periodos; estado Time limit)",180.08498410000175,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (4 vinos, 4 periodos)",4.1153384486102595,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (4 vinos, 4 periodos; estado Time limit)",67.9634209087267,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo A stock (4 vinos, 5 periodos)",6642022.544622223,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo A stock (4 vinos, 5 periodos)",129.07335720000265,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Costo postergar todo (4 vinos, 5 periodos; estado Time limit)",7299817.358663519,$,escalabilidad/escalabilidad.csv
+Escalabilidad,"Tiempo postergar todo (4 vinos, 5 periodos; estado Time limit)",180.21192339999837,s,escalabilidad/escalabilidad.csv
+Escalabilidad,"Brecha postergar todo (4 vinos, 5 periodos)",73.27637769288327,%,escalabilidad/escalabilidad.csv
+Escalabilidad,"Ahorro postergar todo vs A stock (4 vinos, 5 periodos; estado Time limit)",-9.90353178752585,%,escalabilidad/escalabilidad.csv
+Horizonte rodante,"Costo postergar todo (2 vinos, 4 periodos, ventana 2)",799423.0355555556,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (2 vinos, 4 periodos, ventana 2)",2.8574187999911373,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (2 vinos, 4 periodos, ventana 2)",0.009877518082612724,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (2 vinos, 4 periodos, ventana 3)",799423.0355555556,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (2 vinos, 4 periodos, ventana 3)",9.004238300010911,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (2 vinos, 4 periodos, ventana 3)",0.009877518082612724,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (2 vinos, 5 periodos, ventana 2)",978803.571851852,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (2 vinos, 5 periodos, ventana 2)",7.447634100011783,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (2 vinos, 5 periodos, ventana 2)",0.88961246410805,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (2 vinos, 5 periodos, ventana 3)",978803.571851852,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (2 vinos, 5 periodos, ventana 3)",25.886856099998116,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (2 vinos, 5 periodos, ventana 3)",0.88961246410805,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (3 vinos, 4 periodos, ventana 2)",1096708.6515555554,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (3 vinos, 4 periodos, ventana 2)",3.916196199992555,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (3 vinos, 4 periodos, ventana 2)",0.009978517864706047,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (3 vinos, 4 periodos, ventana 3)",1096708.6515555554,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (3 vinos, 4 periodos, ventana 3)",20.91775459999917,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (3 vinos, 4 periodos, ventana 3)",0.009978517864706047,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (3 vinos, 5 periodos, ventana 2)",1333140.7019851853,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (3 vinos, 5 periodos, ventana 2)",10.077226900000824,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (3 vinos, 5 periodos, ventana 2)",1.4281475025605002,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (3 vinos, 5 periodos, ventana 3)",1333140.7019851853,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (3 vinos, 5 periodos, ventana 3)",64.28140100000019,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (3 vinos, 5 periodos, ventana 3)",1.4281475025605002,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (4 vinos, 4 periodos, ventana 2)",1613119.9044444442,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (4 vinos, 4 periodos, ventana 2)",6.906268099992303,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (4 vinos, 4 periodos, ventana 2)",0.68379624651619,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (4 vinos, 4 periodos, ventana 3)",1613119.904444477,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (4 vinos, 4 periodos, ventana 3)",36.564399499999126,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (4 vinos, 4 periodos, ventana 3)",0.68379624651824,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (4 vinos, 5 periodos, ventana 2)",1977257.583081481,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (4 vinos, 5 periodos, ventana 2)",18.60299730001134,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (4 vinos, 5 periodos, ventana 2)",1.3575094321905699,%,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Costo postergar todo (4 vinos, 5 periodos, ventana 3)",1977257.5830815136,$,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Tiempo total (4 vinos, 5 periodos, ventana 3)",97.57601349998733,s,horizonte/horizonte_vs_completo.csv
+Horizonte rodante,"Maximo sobrecosto vs optimo (4 vinos, 5 periodos, ventana 3)",1.35750943219226,%,horizonte/horizonte_vs_completo.csv
+Horizonte largo,"Costo (2 vinos, 6 periodos, ventana 2, 0)",4133191.9723259294,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (2 vinos, 6 periodos, ventana 2, 0)",4.373147099991911,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (2 vinos, 6 periodos, ventana 2, todos)",1157007.8975506178,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (2 vinos, 6 periodos, ventana 2, todos)",19.278307700005826,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (2 vinos, 7 periodos, ventana 2, 0)",4861966.613015316,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (2 vinos, 7 periodos, ventana 2, 0)",13.31622320000315,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (2 vinos, 7 periodos, ventana 2, todos)",1334453.0851657612,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (2 vinos, 7 periodos, ventana 2, todos)",49.759611000001314,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (4 vinos, 6 periodos, ventana 2, 0)",8063799.028314076,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (4 vinos, 6 periodos, ventana 2, 0)",6.088164400003734,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (4 vinos, 6 periodos, ventana 2, todos)",2339026.203720494,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (4 vinos, 6 periodos, ventana 2, todos)",48.238548499997705,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (4 vinos, 7 periodos, ventana 2, 0)",9482978.155336693,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (4 vinos, 7 periodos, ventana 2, 0)",17.328717099997448,s,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Costo (4 vinos, 7 periodos, ventana 2, todos)",2699265.3048126064,$,horizonte/horizonte_periodos_largos.csv
+Horizonte largo,"Tiempo total (4 vinos, 7 periodos, ventana 2, todos)",118.38268759999482,s,horizonte/horizonte_periodos_largos.csv

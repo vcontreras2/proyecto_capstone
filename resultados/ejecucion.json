@@ -1,0 +1,62 @@
+{
+  "inicio": "2026-11-13T15:26:21",
+  "fin": "2026-11-13T15:55:49",
+  "duracion_total_s": 1767.4,
+  "duracion_por_etapa_s": {
+    "analisis": 221.0,
+    "escalabilidad": 940.2,
+    "horizonte": 606.1
+  },
+  "semilla_solver": 0,
+  "escalabilidad": {
+    "limite_tiempo_s": 180,
+    "politicas": [
+      "0",
+      "todos"
+    ]
+  },
+  "horizonte": {
+    "limite_tiempo_por_ventana_s": 60,
+    "ventanas": [
+      2,
+      3
+    ]
+  },
+  "numeros_congelados": 245,
+  "versiones": {
+    "pulp": "3.3.0",
+    "highspy": "1.15.1",
+    "pandas": "3.0.5",
+    "numpy": "2.5.2",
+    "matplotlib": "3.11.2",
+    "networkx": "3.7"
+  },
+  "python": "3.13.3",
+  "equipo": {
+    "Procesador": "AMD Ryzen 7 8840HS w/ Radeon 780M Graphics (8 núcleos / 16 hilos)",
+    "Memoria RAM": "15,3 GB",
+    "Sistema operativo": "Windows 11",
+    "Python": "3.13.3",
+    "PuLP / HiGHS": "3.3.0 / 1.15.1"
+  },
+  "sha256_csv": {
+    "cotas_plan_periodo1.csv": "67c07c14f2a3f0a113b43e722a3f922a0c3c71152f1d370b8556bb4209cfd1ab",
+    "cotas_por_costo_atraso.csv": "9b843e1aea98cd6c73ca586aab5515489b80ccde1fd57155edc0fef5bb12d39d",
+    "cotas_vss_evpi.csv": "bd34b9eee0a2433c64657ce2f85e0a07e84c06f3eb2877d85d762a60e5c5271f",
+    "cotas_ws_trayectorias.csv": "39918863bf3f044c0bcd7f46f859e33c5c96d0c1421f41b1c9d6d56f19eb83f1",
+    "cv_arbol_base.csv": "c9e518b28cba7526aaad8ad1148ee70900f1bae138c5203027df4f91a2a65cf7",
+    "numeros_congelados.csv": "d8b56654819770e6bb339bfab7bfee9857053cfed2360506ed78da63c10266ec",
+    "sens_correlacion.csv": "d44f501281b94e0618455b336323f41fc985b987d669204b5da3a062aed673ba",
+    "sens_correlacion_estadisticas_logradas.csv": "5a18701e4ec17b1c58ff62298c23e245ca860b9cd781fae9a6901a4c3eeb6a0c",
+    "sens_costo_atraso.csv": "6ecbea6fc3308f7fdd5c883ea572bda323ac02c0850e0919f00347b12f238934",
+    "sens_costo_atraso_x_capacidad.csv": "001c169e86b6f97436f98e11e45476591ef717928c03fde8377b49a9ccd9ece0",
+    "sens_valor_residual.csv": "b614024826feea25079765bff4678e90ce673b158450e4d17166a33ab4487d3f",
+    "sens_variabilidad.csv": "1507f9ae5322da8109f675ad67dad035f1f763df829754fd9802cf04a6a07164",
+    "valor_residual_verificacion_plan.csv": "180cb81029e9e2a1e18d0caaf52c7e97d35aee4226984f90f9948c2096b2df50",
+    "escalabilidad/escalabilidad.csv": "d157eda1a5e55a4fb55941360c248e6e7af569f78e96f63f9515373519a91717",
+    "horizonte/horizonte.csv": "134cc5287d435bfa33079637b37774d28b9fb8481927474b38356ad52f0bd1b0",
+    "horizonte/horizonte_periodos_largos.csv": "42faa8c74b05032a9cbf4e670f81125221ebe7ab766b8c17e6360c1d51bf0c80",
+    "horizonte/horizonte_vs_completo.csv": "37eb37ea017639727326823296f2889d917ca1c4868ccd7039b1660c2d0f1514"
+  },
+  "nota": "Las corridas que terminan en 'Time limit' dependen de la velocidad del computador: con otra maquina, la mejor solucion hallada puede ser distinta. Por eso se usan estos numeros y no se vuelve a correr."
+}

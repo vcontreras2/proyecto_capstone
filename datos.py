@@ -48,5 +48,6 @@ PARAMS = dict(
     Cz_b=1500.0, Cz_bl=1500.0, Cz_l=500.0,       # costo set-up ($)
     Cs_b=10.0, Cs_bl=15.0,             # costo guardar sin etiqueta / terminada ($ por periodo)
     Cb_bl=15_000.0,                    # costo botella atrasada ($ por periodo)
+    alfa=0.0,                          # valor residual del inventario final, fraccion de Cs (0 <= alfa < 1)
     M_b=266_667.0, M_bl=266_667.0, M_l=298_214.0,  # maximos de produccion
 )
